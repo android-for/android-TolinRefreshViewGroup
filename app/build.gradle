@@ -1,0 +1,29 @@
+apply plugin: 'com.android.application'
+Properties properties = new Properties()
+properties.load(project.rootProject.file('settings.properties').newDataInputStream())
+android {
+    compileSdkVersion properties.get("compileSdkVer").toInteger()
+    buildToolsVersion properties.get("buildToolsVer")
+
+    defaultConfig {
+        applicationId "tolin.android.com.android__tolinrefreshviewgroup"
+        minSdkVersion properties.get("minSdkVer").toInteger()
+        targetSdkVersion properties.get("targetSdkVer").toInteger()
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled true
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    compile project(':library')
+}

@@ -1,0 +1,99 @@
+apply plugin: 'com.android.library'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+Properties properties = new Properties()
+properties.load(project.rootProject.file('settings.properties').newDataInputStream())
+Properties properties2 = new Properties()
+properties2.load(project.rootProject.file('user.properties').newDataInputStream())
+dependencies {
+    compile fileTree(include: ['*.jar'], dir: 'libs')
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:' + properties.get("dependComVersion")
+    compile 'com.android.support:design:' + properties.get("dependComVersion")
+    compile 'com.android.support:recyclerview-v7:' + properties.get("dependComVersion")
+}
+
+android {
+    compileSdkVersion properties.get("compileSdkVer").toInteger()
+    buildToolsVersion properties.get("buildToolsVer")
+    resourcePrefix "Tolin"    //这个随便填
+
+    defaultConfig {
+        minSdkVersion properties.get("minSdkVer").toInteger()
+        targetSdkVersion properties.get("targetSdkVer").toInteger()
+        versionCode 1
+        versionName "1.0.1"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+// 提交到仓库中的版本号
+version = properties.getProperty("aar_version");
+def siteUrl = 'https://github.com/android-for/android-TolinRefreshViewGroup'      // 项目的主页
+def gitUrl = 'https://github.com/android-for/android-TolinRefreshViewGroup'   // Git仓库的url
+group = properties.getProperty("bintrayId")
+install {
+    repositories.mavenInstaller {
+        pom {
+            project {
+                packaging 'aar'
+                url siteUrl
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id properties.getProperty("author")        //填写的一些基本信息
+                        name properties.getProperty("author")
+                        email properties.getProperty("email")
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+
+
+task sourcesJar(type: Jar) { //（建议加上）
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+task javadoc(type: Javadoc) {//（建议加上）
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    options.encoding = "UTF-8" //添加编码方式，才不会报编码错误
+}
+task javadocJar(type: Jar, dependsOn: javadoc) {//（建议加上）
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+//    archives javadocJar  //上传仓库不需要这个doc，如果打包的话，会打包不成功，所以这里注释掉了；
+    archives sourcesJar //打包源代码；
+}
+bintray {
+    user = properties2.getProperty("store_user","Tolin")
+    key = properties2.getProperty("store_apikey","Tolin")
+    configurations = ['archives']
+    pkg {
+        repo = "maven"
+        name = properties.getProperty("bintrayName")    //发布到Maven上的项目名字，一般与Maven上的项目空间相同，如果不相同，则会自动在Maven仓库中创建相同的包名，相同，则直接放到空间仓库中，且根据版本号来进行存放(需要修改)
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
+}
